@@ -2,43 +2,18 @@ const pool = require('../../models/postgresql');
 const bcrypt = require('bcrypt');
 const { createJWTToken } = require('../../utils/guard');
 const { response } = require('../../utils/response');
+const authService = require('../../models/services/auth.service');
 
 exports.signup = async (req,res)=>{
     try{
         let requestdata = req.body;
 
-        let query = `select * from users where email = $1`;
-        let queryInput = [
-            requestdata.email
-        ];
-
-        await pool.query(query,queryInput);
+        await authService.selectByEmail(requestdata.email);
 
         requestdata.password = await bcrypt.hash(requestdata.password, 8);
         requestdata.phone = requestdata.phone? requestdata.phone : null;
 
-        query = `insert into users (first_name,
-                                    last_name,
-                                    email,
-                                    phone,
-                                    password,
-                                    user_role,
-                                    user_profile_picture,
-                                    created_at)
-                values ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
-        
-        queryInput = [
-            requestdata.first_name,
-            requestdata.last_name,
-            requestdata.email,
-            requestdata.phone,
-            requestdata.password,
-            requestdata.user_role,
-            requestdata.user_profile_picture,
-            currentTS = new Date()
-        ];
-
-        let { rows } = await pool.query(query,queryInput);
+        let { rows } = await authService.addUser(requestdata);
 
         let token = await createJWTToken({
             id: rows[0].id,
@@ -60,12 +35,7 @@ exports.signin = async (req,res)=>{
     try{
         let requestdata = req.body;
 
-        let query = `select * from users where email = $1`;
-        let queryInput = [
-            requestdata.email
-        ];
-
-        let { rows } = await pool.query(query,queryInput);
+        let { rows } = await authService.selectByEmail(requestdata.email);
 
         let isMatch = await bcrypt.compare(requestdata.password, rows[0].password);
 
@@ -90,12 +60,7 @@ exports.forgetPassword = async (req,res)=>{
     try{
         let requestData = req.body;
 
-        let query = `select * from users where email = $1`;
-        let queryInput = [
-            requestData.email
-        ];
-
-        let { rows } = await pool.query(query,queryInput);
+        let { rows } = await authService.selectByEmail(requestData.email);
 
         if(rows.length === 0){
             return response(res, true, 404, 'Email does not exist!');
@@ -105,16 +70,7 @@ exports.forgetPassword = async (req,res)=>{
         let expire = Date.now() + 3*60*1000;
         expire = new Date(expire);
 
-        query = `   update users
-                    set otp = $1, otp_expire = $2
-                    where email = $3`;
-        queryInput = [
-            otp,
-            expire,
-            requestData.email
-        ];
-
-        await pool.query(query,queryInput);
+        await authService.updateOTP(otp,expire,requestData.email);
 
         return response(res, true, 200, 'OTP is send to your email!');
 
@@ -134,29 +90,13 @@ exports.resetForgetPassword = async (req,res)=>{
 
         requestData.password = await bcrypt.hash(requestData.password,8);
 
-        let query = `   select * 
-                        from users
-                        where otp = $1 and otp_expire > $2`;
-        let queryInput = [
-            requestData.otp,
-            currentTS =  new Date()
-        ];
-
-        let { rows } = await pool.query(query,queryInput);
+        let { rows } = await authService.selectByOTP(requestData.otp);
 
         if(rows.length === 0){
             return response(res, false, 400, 'Please re-process!');
         }
 
-        query = `   update users
-                    set password = $1, otp = null, otp_expire = null
-                    where id = $2`;
-        queryInput = [
-            requestData.password,
-            rows[0].id
-        ];
-
-        let { error } = await pool.query(query,queryInput);
+        let { error } = await authService.setForgetPassword(requestData.password, rows[0].id);
 
         if(error){
             return response(res, false, 400, 'Please re-process!');
