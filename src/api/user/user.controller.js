@@ -36,6 +36,10 @@ exports.resetPassword = async (req,res)=>{
 
         let { rows } = await userService.selectById(id);
 
+        if( rows.length === 0){
+            return response(res, false, 404, 'User not found!');
+        }
+
         let isMatch = await bcrypt.compare(requestData.old_password, rows[0].password);
 
         if (!isMatch) {

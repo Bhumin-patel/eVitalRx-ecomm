@@ -2,9 +2,10 @@ const pool = require('../postgresql');
 
 exports.selectByEmail = async (email) => {
     let query = `select * from users where email = $1`;
-        let queryInput = [
-            email
-        ];
+    
+    let queryInput = [
+        email
+    ];
 
     return await pool.query(query,queryInput);
 };

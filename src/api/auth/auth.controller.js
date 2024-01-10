@@ -8,7 +8,11 @@ exports.signup = async (req,res)=>{
     try{
         let requestdata = req.body;
 
-        await authService.selectByEmail(requestdata.email);
+        let { rows:newRows } = await authService.selectByEmail(requestdata.email);
+
+        if(newRows.length === 1){
+            return response(res, false, 400, 'Email already exists!');
+        }
 
         requestdata.password = await bcrypt.hash(requestdata.password, 8);
         requestdata.phone = requestdata.phone? requestdata.phone : null;
@@ -23,10 +27,6 @@ exports.signup = async (req,res)=>{
         return response(res, true, 201, 'signup successfully!', { data: rows[0], token});  
     } catch(error){
         console.log('---Error in signup :',error);
-        if(error.code === "23505"){
-            return response(res, false, 403, 'Email or Phone Number already exists!', error);
-        }
-        
         return response(res,false,500, 'Something went wrong!', error);
     }
 };
@@ -37,10 +37,14 @@ exports.signin = async (req,res)=>{
 
         let { rows } = await authService.selectByEmail(requestdata.email);
 
+        if(rows.length === 0){
+            return response(res, false, 400, 'user with this email does not exist!');
+        }
+
         let isMatch = await bcrypt.compare(requestdata.password, rows[0].password);
 
         if (!isMatch) {
-            return response(res, true, 401, 'email or password is incorrect!');
+            return response(res, false, 401, 'email or password is incorrect!');
         }
 
         let token = await createJWTToken({
