@@ -11,6 +11,8 @@ const userRoutes = require('./api/user/user.routes');
 const cityRoutes = require('./api/city/city.routes');
 const addressRoutes = require('./api/address/address.routes');
 const productRoutes = require('./api/product/product.routes');
+const cartRoutes = require('./api/cart/cart.routes');
+const orderRoutes = require('./api/order/order.routes');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -29,6 +31,8 @@ app.use('/user', guard.verifyToken, userRoutes);
 app.use('/city', guard.verifyToken, cityRoutes);
 app.use('/address', guard.verifyToken, addressRoutes);
 app.use('/product', guard.verifyToken, productRoutes);
+app.use('/cart', guard.verifyToken, cartRoutes);
+app.use('/order',guard.verifyToken, orderRoutes);
 
 app.listen(port, ()=>{
     console.log(`Server is running on port ${port}`);
