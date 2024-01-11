@@ -94,7 +94,7 @@ exports.deleteCartItem = async (cart_id,user_id) => {
 exports.deleteCart = async (user_id) => {
    
     let query = `   delete from carts
-                    where user_id = $2`;
+                    where user_id = $1`;
     
     let queryInput = [
         user_id
