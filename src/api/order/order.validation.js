@@ -17,7 +17,17 @@ exports.cancelOrder = (req, res, next) => {
 };
 
 exports.filterOrder = (req, res, next) => {
-    const schema = joi.object({});
+    const schema = joi.object({
+        id: joi.number().allow(),
+        payment_status: joi.boolean().allow(),
+        order_status: joi.string().valid('PROCESSING', 
+                                        'DISPATCHED', 
+                                        'DELIVERED', 
+                                        'CANCELED', 
+                                        'RETURNED')
+                                    .allow(),
+        address_id: joi.number().allow()
+    });
 
     return validation(req, res, next, schema);
 };

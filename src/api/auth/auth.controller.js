@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const { createJWTToken } = require('../../utils/guard');
 const { response } = require('../../utils/response');
 const authService = require('../../models/services/auth.service');
+const { sendOTPMail } = require('../../utils/mail');
 
 exports.signup = async (req,res)=>{
     try{
@@ -75,6 +76,8 @@ exports.forgetPassword = async (req,res)=>{
         expire = new Date(expire);
 
         await authService.updateOTP(otp,expire,requestData.email);
+
+        await sendOTPMail('torey45@ethereal.email', otp);
 
         return response(res, true, 200, 'OTP is send to your email!');
 

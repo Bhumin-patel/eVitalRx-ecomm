@@ -3,8 +3,8 @@ const controller = require('./order.controller');
 const validation = require('./order.validation');
 
 Router.post('/place-order', validation.placeOrder, controller.placeOrder);
-// Router.post('/cancel-order', validation.cancelOrder, controller.cancelOrder);
-// Router.get('/filter-order', validation.filterOrder, controller.filterOrder);
-// Router.post('/list-order-item', validation.listOrderItem, controller.listOrderItem);
+Router.delete('/cancel-order/:id', validation.cancelOrder, controller.cancelOrder);
+Router.post('/filter-order', validation.filterOrder, controller.filterOrder);
+Router.get('/list-order-item/:order_id', validation.listOrderItem, controller.listOrderItem);
 
 module.exports = Router;

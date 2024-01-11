@@ -14,13 +14,13 @@ exports.add = async (req,res)=>{
 
         requestData.user_id = id;
 
-        let { rows: check } = await cartService.selectItemFromCart(requestData);
+        let { rows: check } = await cartService.selectItemFromCart(requestData); // pass required params only
 
         if(check.length === 1){
             return response(res, false, 400, 'Product is already in the cart!');
         }
 
-        let { rows } = await cartService.add(requestData);
+        let { rows } = await cartService.add(requestData); //
 
         return response(res, true, 200, 'Product is added in the cart!', rows[0]);        
     } catch(error){

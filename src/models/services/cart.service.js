@@ -31,7 +31,7 @@ exports.add = async (data) => {
     return await pool.query(query, queryInput);
 };
 
-exports.selectCartItems = async (id) => {
+exports.selectCartItems = async (id) => { // get product name
     let query = `   select *
                     from carts
                     where user_id = $1`;

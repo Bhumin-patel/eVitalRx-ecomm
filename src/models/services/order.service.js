@@ -32,6 +32,10 @@ exports.placeOrder = async (cartProducts, requestData) => {
         
         let { rows: couponRows }= await pool.query(query);
 
+        if(couponRows.length === 0){
+            return response(res, false, 404, 'Coupon is not found!');
+        }
+
         total_price-=couponRows[0].coupon_amount;
 
         await client.query('BEGIN');
@@ -95,12 +99,77 @@ exports.placeOrder = async (cartProducts, requestData) => {
         await client.query('COMMIT');
 
         return {
+            error:false,
             order: orderRows[0],
             order_products: orderProductsRows 
         };
     } catch (error){
         await client.query('ROLLBACK');
         console.log('---Error in order-placeOrder-service :',error);
-        return {};
+        return {
+            error:true,
+            order: {},
+            order_products: []
+        };
     }
+};
+
+exports.cancelOrder = async (order_id, user_id) => {
+    let query = `   update orders
+                    set order_status = 'CANCELED'
+                    where id = $1 and user_id = $2 returning *`;
+    
+    let queryInput = [
+        order_id,
+        user_id
+    ];
+
+    return await pool.query(query,queryInput);
+};
+
+exports.listOrderItem = async (order_id) => {
+    let query = `   select *
+                    from order_products
+                    where order_id = $1`;
+    
+    let queryInput = [
+        order_id
+    ];
+
+    return await pool.query(query,queryInput);
+};
+
+exports.selectOrder = async (order_id, user_id) => {
+    let query = `   select *
+                    from orders
+                    where id = $1 and user_id = $2`;
+    
+    let queryInput = [
+        order_id,
+        user_id
+    ];
+
+    return await pool.query(query,queryInput);
+};
+
+exports.filterOrder = async (data) => {
+    
+    let query = `   select *
+                    from orders `;
+    
+    let queryInput;
+
+    const keys = Object.keys(data);
+    
+    if(keys.length){
+        let whereClause = keys.map((key,index)=>{
+            return `${key} = $${index+1}`;
+        })
+
+        query = ` ${query} where ${whereClause.join(` and `)} order by created_at desc`;
+        
+        queryInput = Object.values(data);
+    }
+
+    return await pool.query(query,queryInput);
 };
